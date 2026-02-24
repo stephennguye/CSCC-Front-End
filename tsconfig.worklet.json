@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "WebWorker"],
+    "noEmit": false,
+    "outDir": "dist/worklets"
+  },
+  "include": ["src/audio/**/*.worklet.ts"],
+  "exclude": []
+}
