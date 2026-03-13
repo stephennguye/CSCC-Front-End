@@ -284,6 +284,27 @@ class WebSocketService {
         break
       }
 
+      case 'pipeline_state': {
+        store.pushPipelineOutput({
+          sttText: msg.stt_text ?? null,
+          nlu: {
+            intent: msg.nlu.intent,
+            confidence: msg.nlu.confidence,
+            slots: msg.nlu.slots,
+          },
+          state: {
+            slots: msg.state.slots,
+            confirmed: msg.state.confirmed,
+            turnCount: msg.state.turn_count,
+          },
+          action: msg.action,
+          targetSlot: msg.target_slot ?? null,
+          nlgResponse: msg.nlg_response,
+          timestamp: Date.now(),
+        })
+        break
+      }
+
       default:
         break
     }

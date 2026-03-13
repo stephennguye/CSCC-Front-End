@@ -5,29 +5,8 @@
 import React from 'react'
 import { useAppStore } from '../../store/store'
 
-const activeStyle: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '0.375rem',
-  color: '#065f46',
-  fontWeight: 600,
-  fontSize: '0.875rem',
-}
-
-const inactiveStyle: React.CSSProperties = {
-  ...activeStyle,
-  color: '#6b7280',
-  fontWeight: 400,
-}
-
-const dotBase: React.CSSProperties = {
-  width: '0.625rem',
-  height: '0.625rem',
-  borderRadius: '50%',
-}
-
 /**
- * Displays a mic-active or mic-inactive status indicator.
+ * Displays a small, elegant mic status indicator.
  * Subscribes to vadActive with a scalar selector (no re-render on other state changes).
  * Announces changes via aria-live="polite" (FR-004).
  */
@@ -38,15 +17,29 @@ export function MicStatusIndicator(): React.ReactElement {
     <span
       aria-live="polite"
       aria-atomic="true"
-      style={vadActive ? activeStyle : inactiveStyle}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 'var(--space-2)',
+        color: vadActive ? 'var(--color-success)' : 'var(--color-text-tertiary)',
+        fontWeight: 500,
+        fontSize: 'var(--font-size-xs)',
+        letterSpacing: '0.02em',
+        transition: 'color 0.2s ease',
+      }}
       aria-label={vadActive ? 'Microphone is active — voice detected' : 'Microphone is standby'}
     >
+      {/* Animated dot */}
       <span
         style={{
-          ...dotBase,
-          backgroundColor: vadActive ? '#10b981' : '#d1d5db',
-          boxShadow: vadActive ? '0 0 0 2px #a7f3d0' : 'none',
-          animation: vadActive ? 'pulseRing 1.2s ease-out infinite' : 'none',
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          backgroundColor: vadActive ? 'var(--color-success)' : 'var(--color-border)',
+          boxShadow: vadActive ? '0 0 6px rgba(16, 185, 129, 0.5)' : 'none',
+          animation: vadActive ? 'micDotPulse 1.5s ease-in-out infinite' : 'none',
+          transition: 'background-color 0.2s ease, box-shadow 0.2s ease',
+          flexShrink: 0,
         }}
       />
       {vadActive ? 'Mic active' : 'Mic standby'}

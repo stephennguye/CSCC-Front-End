@@ -56,6 +56,29 @@ export const BargeInAckSchema = z.object({
   type: z.literal('barge_in_ack'),
 })
 
+// Pipeline state message from TOD pipeline
+export const PipelineStateSchema = z.object({
+  type: z.literal('pipeline_state'),
+  session_id: z.string(),
+  stt_text: z.string().nullable().optional(),
+  nlu: z.object({
+    intent: z.string(),
+    confidence: z.number(),
+    slots: z.record(z.string(), z.string()),
+  }),
+  state: z.object({
+    session_id: z.string(),
+    intent: z.string().nullable(),
+    intent_confidence: z.number(),
+    slots: z.record(z.string(), z.string().nullable()),
+    confirmed: z.boolean(),
+    turn_count: z.number(),
+  }),
+  action: z.string(),
+  target_slot: z.string().nullable().optional(),
+  nlg_response: z.string(),
+})
+
 export const ErrorMessageSchema = z.object({
   type: z.literal('error'),
   code: z.string(),
@@ -76,6 +99,7 @@ export const InboundMessageSchema = z.discriminatedUnion('type', [
   ReminderMessageSchema,
   BargeInAckSchema,
   ErrorMessageSchema,
+  PipelineStateSchema,
 ])
 
 // ---------------------------------------------------------------------------
@@ -91,3 +115,4 @@ export type ClaimMessage     = z.infer<typeof ClaimMessageSchema>
 export type ReminderMessage  = z.infer<typeof ReminderMessageSchema>
 export type BargeInAck       = z.infer<typeof BargeInAckSchema>
 export type ErrorMessage     = z.infer<typeof ErrorMessageSchema>
+export type PipelineStateMessage = z.infer<typeof PipelineStateSchema>

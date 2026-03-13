@@ -51,6 +51,20 @@ export function ExportButton({ sessionData, isLoading, filename }: ExportButtonP
       disabled={isLoading}
       onClick={handleExport}
       aria-label="Export session data as JSON file"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        padding: '0.5rem 1rem',
+        fontSize: '0.8125rem',
+        fontWeight: 600,
+        borderRadius: 'var(--radius-input)',
+        backgroundColor: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        color: 'var(--color-text-secondary)',
+        cursor: isLoading ? 'not-allowed' : 'pointer',
+        transition: 'background-color 0.15s, border-color 0.15s, color 0.15s',
+      }}
     >
       {/* Download icon (inline SVG — no external deps) */}
       <svg

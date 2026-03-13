@@ -34,25 +34,16 @@ export function TranscriptPanel(): React.ReactElement {
       aria-label="Call transcript"
       style={{
         width: '100%',
-        maxWidth: '40rem',
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.5rem',
+        flexGrow: 1,
+        minHeight: 0,
+        background: 'var(--color-surface)',
+        borderRadius: 'var(--radius-card)',
+        border: '1px solid var(--color-border)',
+        overflow: 'hidden',
       }}
     >
-      <h2
-        style={{
-          fontSize: '0.875rem',
-          fontWeight: 600,
-          color: '#6b7280',
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          margin: 0,
-        }}
-      >
-        Transcript
-      </h2>
-
       {/* Scrollable list — aria-live region for screen-reader announcements */}
       <div
         ref={containerRef}
@@ -63,31 +54,34 @@ export function TranscriptPanel(): React.ReactElement {
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '0.5rem',
+          gap: '0.75rem',
           overflowY: 'auto',
-          maxHeight: '20rem',
-          minHeight: '5rem',
-          padding: '0.75rem',
-          borderRadius: '0.5rem',
-          border: '1px solid #e5e7eb',
-          background: '#fafafa',
-          // Smooth scrolling for auto-scroll UX
+          flexGrow: 1,
+          padding: '1rem',
           scrollBehavior: 'smooth',
         }}
       >
         {!hasContent && (
-          <p
+          <div
             style={{
-              margin: 0,
-              fontSize: '0.875rem',
-              color: '#9ca3af',
-              textAlign: 'center',
-              alignSelf: 'center',
-              padding: '1rem 0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexGrow: 1,
+              minHeight: '8rem',
             }}
           >
-            Transcript will appear here when the call starts.
-          </p>
+            <p
+              style={{
+                margin: 0,
+                fontSize: '0.875rem',
+                color: 'var(--color-text-muted)',
+                textAlign: 'center',
+              }}
+            >
+              Conversation will appear here when the call starts.
+            </p>
+          </div>
         )}
 
         {/* Committed entries */}
@@ -107,21 +101,23 @@ export function TranscriptPanel(): React.ReactElement {
             style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.25rem',
-              padding: '0.5rem 0.75rem',
-              borderRadius: '0.375rem',
-              background: '#f0fdf4',
+              gap: '0.375rem',
+              padding: '0.75rem 1rem',
+              borderRadius: 'var(--radius-card)',
+              background: 'var(--color-surface)',
+              border: '1.5px solid var(--color-accent)',
               alignSelf: 'flex-start',
-              maxWidth: '85%',
-              // Subtle pulsing border to signal streaming activity
-              border: '1px dashed #6ee7b7',
+              maxWidth: '80%',
+              animation: 'partialPulse 2s ease-in-out infinite',
             }}
           >
             <span
               style={{
                 fontSize: '0.6875rem',
                 fontWeight: 600,
-                color: '#065f46',
+                color: 'var(--color-text-muted)',
+                textTransform: 'uppercase' as const,
+                letterSpacing: '0.04em',
               }}
             >
               {speakerLabels.ai}
@@ -131,15 +127,23 @@ export function TranscriptPanel(): React.ReactElement {
               dangerouslySetInnerHTML={{ __html: sanitise(currentPartial) }}
               style={{
                 margin: 0,
-                fontSize: '1rem',
+                fontSize: '0.9375rem',
                 lineHeight: 1.6,
-                color: '#111827',
+                color: 'var(--color-text)',
                 wordBreak: 'break-word',
               }}
             />
           </div>
         )}
       </div>
+
+      {/* Keyframe for pulsing border on streaming partial */}
+      <style>{`
+        @keyframes partialPulse {
+          0%, 100% { border-color: var(--color-accent); opacity: 1; }
+          50% { border-color: transparent; opacity: 0.85; }
+        }
+      `}</style>
     </section>
   )
 }

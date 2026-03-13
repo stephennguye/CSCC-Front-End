@@ -19,14 +19,23 @@ export interface TranscriptSectionProps {
  */
 export function TranscriptSection({ transcript }: TranscriptSectionProps): React.ReactElement {
   return (
-    <section aria-labelledby="transcript-section-heading">
+    <section
+      aria-labelledby="transcript-section-heading"
+      style={{
+        backgroundColor: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        borderRadius: 'var(--radius-card)',
+        padding: '1.25rem 1.5rem',
+      }}
+    >
       <h2
         id="transcript-section-heading"
         style={{
-          margin: '0 0 0.75rem',
-          fontSize: '1rem',
+          margin: '0 0 1rem',
+          fontSize: '0.9375rem',
           fontWeight: 700,
-          color: '#111827',
+          color: 'var(--color-text)',
+          letterSpacing: '0.01em',
         }}
       >
         Transcript

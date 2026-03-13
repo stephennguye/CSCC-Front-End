@@ -21,14 +21,23 @@ export interface ClaimsSectionProps {
  */
 export function ClaimsSection({ claims }: ClaimsSectionProps): React.ReactElement {
   return (
-    <section aria-labelledby="claims-section-heading">
+    <section
+      aria-labelledby="claims-section-heading"
+      style={{
+        backgroundColor: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        borderRadius: 'var(--radius-card)',
+        padding: '1.25rem 1.5rem',
+      }}
+    >
       <h2
         id="claims-section-heading"
         style={{
-          margin: '0 0 0.75rem',
-          fontSize: '1rem',
+          margin: '0 0 1rem',
+          fontSize: '0.9375rem',
           fontWeight: 700,
-          color: '#111827',
+          color: 'var(--color-text)',
+          letterSpacing: '0.01em',
         }}
       >
         Extracted Claims
@@ -47,7 +56,7 @@ export function ClaimsSection({ claims }: ClaimsSectionProps): React.ReactElemen
             padding: 0,
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.5rem',
+            gap: '0.625rem',
           }}
           aria-label="Extracted claims"
         >
@@ -61,11 +70,11 @@ export function ClaimsSection({ claims }: ClaimsSectionProps): React.ReactElemen
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '0.375rem',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #e5e7eb',
-                  backgroundColor: '#ffffff',
+                  gap: '0.5rem',
+                  padding: '0.875rem 1rem',
+                  borderRadius: 'var(--radius-input)',
+                  backgroundColor: 'var(--color-bg)',
+                  border: '1px solid var(--color-border)',
                 }}
               >
                 {/* Speaker + confidence row */}
@@ -73,22 +82,63 @@ export function ClaimsSection({ claims }: ClaimsSectionProps): React.ReactElemen
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.5rem',
+                    gap: '0.625rem',
                   }}
                 >
                   <Badge variant={claim.speaker}>
                     {claim.speaker === 'user' ? 'You' : 'AI'}
                   </Badge>
-                  <span
+
+                  {/* Confidence progress bar */}
+                  <div
                     style={{
-                      fontSize: '0.75rem',
-                      color: '#6b7280',
-                      fontWeight: 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      flex: '1 1 auto',
                     }}
-                    aria-label={`Confidence: ${confidencePct}%`}
                   >
-                    {confidencePct}% confidence
-                  </span>
+                    <div
+                      style={{
+                        flex: '0 0 4rem',
+                        height: '0.375rem',
+                        borderRadius: 'var(--radius-pill)',
+                        backgroundColor: 'var(--color-border)',
+                        overflow: 'hidden',
+                      }}
+                      role="progressbar"
+                      aria-valuenow={confidencePct}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={`Confidence: ${confidencePct}%`}
+                    >
+                      <div
+                        style={{
+                          width: `${confidencePct}%`,
+                          height: '100%',
+                          borderRadius: 'var(--radius-pill)',
+                          backgroundColor:
+                            confidencePct >= 80
+                              ? 'var(--color-success)'
+                              : confidencePct >= 50
+                                ? 'var(--color-warning)'
+                                : 'var(--color-error)',
+                          transition: 'width 0.3s ease',
+                        }}
+                      />
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '0.6875rem',
+                        fontWeight: 600,
+                        color: 'var(--color-text-muted)',
+                        minWidth: '2.25rem',
+                      }}
+                      aria-label={`Confidence: ${confidencePct}%`}
+                    >
+                      {confidencePct}%
+                    </span>
+                  </div>
                 </div>
 
                 {/* Claim text — sanitised before insertion */}
@@ -97,9 +147,9 @@ export function ClaimsSection({ claims }: ClaimsSectionProps): React.ReactElemen
                   dangerouslySetInnerHTML={{ __html: safeText }}
                   style={{
                     margin: 0,
-                    fontSize: '0.9375rem',
+                    fontSize: '0.875rem',
                     lineHeight: 1.6,
-                    color: '#111827',
+                    color: 'var(--color-text-secondary)',
                   }}
                 />
               </li>

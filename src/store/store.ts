@@ -13,6 +13,7 @@ import { createTranscriptSlice } from './slices/transcript.slice'
 import { createConnectionSlice } from './slices/connection.slice'
 import { createAudioSlice } from './slices/audio.slice'
 import { createDashboardSlice } from './slices/dashboard.slice'
+import { createPipelineSlice } from './slices/pipeline.slice'
 import type { AppStore } from './store.types'
 
 export const useAppStore = create<AppStore>()(
@@ -24,6 +25,7 @@ export const useAppStore = create<AppStore>()(
         ...createConnectionSlice(...args),
         ...createAudioSlice(...args),
         ...createDashboardSlice(...args),
+        ...createPipelineSlice(...args),
       })),
     ),
     { name: 'AppStore', enabled: import.meta.env.DEV },

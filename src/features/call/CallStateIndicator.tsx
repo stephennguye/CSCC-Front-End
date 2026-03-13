@@ -1,6 +1,5 @@
 // src/features/call/CallStateIndicator.tsx
-// T031 + T039 – Full per-state visual design: spinner, pulsing mic, animated ellipsis,
-//               waveform bars, checkmark, and warning icon with sanitised error + retry CTA.
+// T031 + T039 – Full per-state visual design with large circular indicator
 // Source: spec.md US3 ACs; plan.md §CallStateIndicator; SC-004 ≤300 ms; FR-003, FR-024, FR-026
 
 import React from 'react'
@@ -11,171 +10,279 @@ import { sanitise } from '../../shared/utils/sanitise'
 import type { CallStatus } from '../../shared/types/call-state'
 
 // ---------------------------------------------------------------------------
-// Per-state display configuration (WCAG AA contrast verified)
+// Per-state display configuration (dark theme)
 // ---------------------------------------------------------------------------
 
 interface StateConfig {
   label: string
-  /** Text / icon colour — ≥4.5:1 contrast against bg */
   color: string
-  bg: string
-  /** Unique aria-label suffix for screen reader announcement */
+  borderColor: string
+  glowColor: string
   ariaDesc: string
+  animation: string
 }
 
 const stateConfig: Record<CallStatus, StateConfig> = {
   idle: {
     label: 'Ready to start',
-    color: '#374151', // gray-700 on gray-100 → 7.8:1
-    bg: '#f3f4f6',
+    color: 'var(--color-text-tertiary)',
+    borderColor: 'var(--color-border)',
+    glowColor: 'transparent',
     ariaDesc: 'Ready to start a call',
+    animation: 'breathe 3s ease-in-out infinite',
   },
   connecting: {
-    label: 'Connecting\u2026',
-    color: '#92400e', // amber-800 on amber-100 → 5.6:1
-    bg: '#fef3c7',
+    label: 'Connecting...',
+    color: 'var(--color-warning)',
+    borderColor: 'var(--color-warning)',
+    glowColor: 'rgba(245, 158, 11, 0.2)',
     ariaDesc: 'Connecting to the call',
+    animation: 'none',
   },
   listening: {
     label: 'Listening',
-    color: '#065f46', // emerald-800 on emerald-100 → 7.1:1
-    bg: '#d1fae5',
+    color: 'var(--color-success)',
+    borderColor: 'var(--color-success)',
+    glowColor: 'rgba(16, 185, 129, 0.15)',
     ariaDesc: 'Listening — microphone active',
+    animation: 'pulseGreen 2s ease-out infinite',
   },
   thinking: {
-    label: 'AI is thinking\u2026',
-    color: '#4c1d95', // violet-900 on violet-100 → 8.4:1
-    bg: '#ede9fe',
+    label: 'AI is thinking...',
+    color: 'var(--color-info)',
+    borderColor: 'var(--color-info)',
+    glowColor: 'rgba(99, 102, 241, 0.15)',
     ariaDesc: 'AI is processing your message',
+    animation: 'none',
   },
   speaking: {
     label: 'AI is speaking',
-    color: '#3730a3', // indigo-800 on indigo-100 → 7.7:1
-    bg: '#e0e7ff',
+    color: 'var(--color-accent)',
+    borderColor: 'var(--color-accent)',
+    glowColor: 'rgba(59, 130, 246, 0.15)',
     ariaDesc: 'AI is speaking a response',
+    animation: 'none',
   },
   ended: {
     label: 'Call ended',
-    color: '#166534', // green-800 on green-50 → 8.9:1
-    bg: '#f0fdf4',
+    color: 'var(--color-success)',
+    borderColor: 'var(--color-success)',
+    glowColor: 'rgba(16, 185, 129, 0.15)',
     ariaDesc: 'Call ended successfully',
+    animation: 'successGlow 2s ease-in-out infinite',
   },
   error: {
     label: 'Error',
-    color: '#991b1b', // red-800 on red-100 → 5.8:1
-    bg: '#fee2e2',
+    color: 'var(--color-error)',
+    borderColor: 'var(--color-error)',
+    glowColor: 'rgba(239, 68, 68, 0.15)',
     ariaDesc: 'An error occurred',
+    animation: 'errorPulse 2s ease-in-out infinite',
   },
 }
 
 // ---------------------------------------------------------------------------
-// Inline icon components (aria-hidden; no external deps; CSS animations only)
+// Inline icon/animation components
 // ---------------------------------------------------------------------------
 
-const spinnerStyle: CSSProperties = {
-  display: 'inline-block',
-  width: '0.75rem',
-  height: '0.75rem',
-  border: '2px solid currentColor',
-  borderTopColor: 'transparent',
-  borderRadius: '50%',
-  animation: 'spin 0.8s linear infinite',
-  flexShrink: 0,
-}
-
-/** Pulsing dot for Listening state — uses pulseRing keyframe from index.css */
-function PulsingMicIcon({ color }: { color: string }): React.ReactElement {
+/** Mic icon for Listening state */
+function MicIcon(): React.ReactElement {
   return (
-    <span
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="var(--color-success)"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden="true"
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '1rem',
-        height: '1rem',
-        borderRadius: '50%',
-        backgroundColor: color,
-        animation: 'pulseRing 1.5s ease-out infinite',
-        flexShrink: 0,
-      }}
     >
-      {/* SVG mic symbol */}
-      <svg width="8" height="10" viewBox="0 0 8 10" fill="none" aria-hidden="true">
-        <rect x="2.5" y="0" width="3" height="5.5" rx="1.5" fill="white" />
-        <path d="M1 4.5C1 6.43 2.34 8 4 8s3-1.57 3-3.5" stroke="white" strokeWidth="1" fill="none" strokeLinecap="round" />
-        <line x1="4" y1="8" x2="4" y2="10" stroke="white" strokeWidth="1" strokeLinecap="round" />
-      </svg>
-    </span>
+      <rect x="9" y="1" width="6" height="11" rx="3" />
+      <path d="M5 10a7 7 0 0 0 14 0" />
+      <line x1="12" y1="17" x2="12" y2="21" />
+      <line x1="8" y1="21" x2="16" y2="21" />
+    </svg>
   )
 }
 
-/** Three animated dots for Thinking state — uses thinkingDot keyframe from index.css */
-function ThinkingDots({ color }: { color: string }): React.ReactElement {
+/** Rotating gradient ring for Connecting state */
+function RotatingRing(): React.ReactElement {
   return (
-    <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
+    <div
+      aria-hidden="true"
+      style={{
+        position: 'absolute',
+        inset: '-4px',
+        borderRadius: '50%',
+        border: '3px solid transparent',
+        borderTopColor: 'var(--color-warning)',
+        borderRightColor: 'rgba(245, 158, 11, 0.3)',
+        animation: 'rotateBorder 1s linear infinite',
+      }}
+    />
+  )
+}
+
+/** Orbital dots for Thinking state */
+function OrbitalDots(): React.ReactElement {
+  return (
+    <>
       {[0, 1, 2].map((i) => (
-        <span
+        <div
           key={i}
+          aria-hidden="true"
           style={{
-            display: 'inline-block',
-            width: '5px',
-            height: '5px',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            width: '8px',
+            height: '8px',
+            marginTop: '-4px',
+            marginLeft: '-4px',
             borderRadius: '50%',
-            backgroundColor: color,
-            transformOrigin: 'center bottom',
-            animation: `thinkingDot 1.2s ease-in-out ${i * 0.2}s infinite`,
+            backgroundColor: 'var(--color-info)',
+            animation: `orbit 1.8s linear ${i * 0.6}s infinite`,
+            opacity: 1 - i * 0.25,
           }}
         />
       ))}
-    </span>
+    </>
   )
 }
 
-/** Four animated bars for Speaking state — uses waveformBar keyframe from index.css */
-function WaveformIcon({ color }: { color: string }): React.ReactElement {
-  const delays = ['0s', '0.1s', '0.2s', '0.1s']
+/** Waveform bars for Speaking state */
+function WaveformBars(): React.ReactElement {
+  const delays = ['0s', '0.15s', '0.3s', '0.15s', '0s']
   return (
-    <span
+    <div
       aria-hidden="true"
-      style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', height: '14px', flexShrink: 0 }}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '4px',
+        height: '40px',
+      }}
     >
       {delays.map((delay, i) => (
         <span
           key={i}
           style={{
-            display: 'inline-block',
-            width: '3px',
+            display: 'block',
+            width: '4px',
             height: '100%',
             borderRadius: '2px',
-            backgroundColor: color,
+            backgroundColor: 'var(--color-accent)',
             transformOrigin: 'center',
-            animation: `waveformBar 0.8s ease-in-out ${delay} infinite`,
+            animation: `waveformLarge 0.8s ease-in-out ${delay} infinite`,
           }}
         />
       ))}
-    </span>
+    </div>
   )
 }
 
-/** Checkmark for Ended state */
-function CheckIcon({ color }: { color: string }): React.ReactElement {
+/** Check icon for Ended state */
+function CheckCircleIcon(): React.ReactElement {
   return (
-    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
-      <circle cx="7" cy="7" r="6.5" stroke={color} strokeWidth="1.5" />
-      <path d="M4 7l2 2 4-4" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      width="40"
+      height="40"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="var(--color-success)"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
     </svg>
   )
 }
 
-/** Warning triangle for Error state */
-function WarningIcon({ color }: { color: string }): React.ReactElement {
+/** Warning icon for Error state */
+function AlertIcon(): React.ReactElement {
   return (
-    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
-      <path d="M7 1L13 13H1L7 1Z" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
-      <line x1="7" y1="5.5" x2="7" y2="8.5" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="7" cy="10.5" r="0.5" fill={color} />
+    <svg
+      width="36"
+      height="36"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="var(--color-error)"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
     </svg>
+  )
+}
+
+/** Spinner icon for Connecting center */
+function SpinnerIcon(): React.ReactElement {
+  return (
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="var(--color-warning)"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+      style={{ animation: 'spin 1s linear infinite' }}
+    >
+      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+    </svg>
+  )
+}
+
+/** Idle headset icon */
+function IdleIcon(): React.ReactElement {
+  return (
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="var(--color-text-tertiary)"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+      <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+    </svg>
+  )
+}
+
+/** Ripple rings for Listening state */
+function RippleRings(): React.ReactElement {
+  return (
+    <>
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: '50%',
+            border: '2px solid var(--color-success)',
+            animation: `ripple 2s ease-out ${i * 0.6}s infinite`,
+            pointerEvents: 'none',
+          }}
+        />
+      ))}
+    </>
   )
 }
 
@@ -189,17 +296,16 @@ export interface CallStateIndicatorProps {
 }
 
 /**
- * Renders a call-state pill with a distinct visual cue for every state:
- * - idle      → plain label
- * - connecting → CSS spinner
- * - listening  → pulsing mic dot
- * - thinking   → three animated dots
- * - speaking   → animated waveform bars
- * - ended      → checkmark icon
- * - error      → warning icon + sanitised error message + retry CTA
- * - reconnecting (wsStatus, not CallStatus) → spinner + attempt N/5
+ * Renders a large circular call state indicator with distinct visuals per state:
+ * - idle       → breathing animation, headset icon
+ * - connecting → rotating gradient border, spinner
+ * - listening  → pulsing green ring, ripple effect, mic icon
+ * - thinking   → orbital dots animation
+ * - speaking   → waveform bars inside
+ * - ended      → check icon with success glow
+ * - error      → alert icon with red pulse
  *
- * All states meet WCAG 2.1 AA (≥4.5:1). State changes announce within ≤300 ms (SC-004).
+ * All states meet WCAG 2.1 AA. State changes announce within ≤300 ms (SC-004).
  */
 export function CallStateIndicator({ onRetry }: CallStateIndicatorProps): React.ReactElement {
   const status         = useAppStore((s) => s.call.status)
@@ -211,19 +317,48 @@ export function CallStateIndicator({ onRetry }: CallStateIndicatorProps): React.
 
   const navigate = useNavigate()
 
-  // Reconnecting is a ConnectionStatus, not a CallStatus — overlay the display
   const isReconnecting = wsStatus === 'reconnecting'
 
   const cfg = isReconnecting
     ? {
-        label: `Reconnecting\u2026 attempt\u00a0${reconnectCount}/5`,
-        color: '#92400e',
-        bg: '#fef3c7',
+        label: `Reconnecting... attempt\u00a0${reconnectCount}/5`,
+        color: 'var(--color-warning)',
+        borderColor: 'var(--color-warning)',
+        glowColor: 'rgba(245, 158, 11, 0.2)',
         ariaDesc: `Reconnecting to the call, attempt ${reconnectCount} of 5`,
+        animation: 'none',
       }
     : stateConfig[status]
 
   const sanitisedError = error ? sanitise(error) : null
+
+  // Determine inner content for the circle
+  const renderInner = (): React.ReactElement | null => {
+    if (isReconnecting || status === 'connecting') return <SpinnerIcon />
+    switch (status) {
+      case 'idle':      return <IdleIcon />
+      case 'listening': return <MicIcon />
+      case 'speaking':  return <WaveformBars />
+      case 'ended':     return <CheckCircleIcon />
+      case 'error':     return <AlertIcon />
+      case 'thinking':  return null // orbital dots are outside the circle
+      default:          return null
+    }
+  }
+
+  const circleStyle: CSSProperties = {
+    position: 'relative',
+    width: '120px',
+    height: '120px',
+    borderRadius: '50%',
+    border: `3px solid ${cfg.borderColor}`,
+    backgroundColor: cfg.glowColor,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    animation: cfg.animation,
+    transition: 'border-color 0.3s ease, background-color 0.3s ease',
+  }
 
   return (
     <div
@@ -231,47 +366,36 @@ export function CallStateIndicator({ onRetry }: CallStateIndicatorProps): React.
       aria-atomic="true"
       aria-label={`Call state: ${cfg.ariaDesc}`}
       style={{
-        display: 'inline-flex',
+        display: 'flex',
         flexDirection: 'column',
-        gap: '0.5rem',
-        alignItems: 'flex-start',
+        alignItems: 'center',
+        gap: 'var(--space-4)',
       }}
     >
-      {/* ── State pill ───────────────────────────────────────────────────── */}
+      {/* ── Large circular indicator ──────────────────────────────────────── */}
+      <div style={circleStyle}>
+        {/* Connecting: rotating ring */}
+        {(status === 'connecting' || isReconnecting) && <RotatingRing />}
+
+        {/* Listening: ripple rings */}
+        {status === 'listening' && !isReconnecting && <RippleRings />}
+
+        {/* Thinking: orbital dots */}
+        {status === 'thinking' && !isReconnecting && <OrbitalDots />}
+
+        {/* Center icon/animation */}
+        {renderInner()}
+      </div>
+
+      {/* ── Status text label ─────────────────────────────────────────────── */}
       <span
         style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.375rem',
-          padding: '0.25rem 0.875rem',
-          borderRadius: '9999px',
-          fontSize: '0.875rem',
+          fontSize: 'var(--font-size-base)',
           fontWeight: 600,
-          lineHeight: 1.5,
-          backgroundColor: cfg.bg,
           color: cfg.color,
+          letterSpacing: '0.02em',
         }}
       >
-        {/* -- Per-state visual cue -- */}
-        {(status === 'connecting' || isReconnecting) && (
-          <span aria-hidden="true" style={spinnerStyle} />
-        )}
-        {status === 'listening' && !isReconnecting && (
-          <PulsingMicIcon color={cfg.color} />
-        )}
-        {status === 'thinking' && !isReconnecting && (
-          <ThinkingDots color={cfg.color} />
-        )}
-        {status === 'speaking' && !isReconnecting && (
-          <WaveformIcon color={cfg.color} />
-        )}
-        {status === 'ended' && !isReconnecting && (
-          <CheckIcon color={cfg.color} />
-        )}
-        {status === 'error' && !isReconnecting && (
-          <WarningIcon color={cfg.color} />
-        )}
-
         {cfg.label}
       </span>
 
@@ -281,14 +405,14 @@ export function CallStateIndicator({ onRetry }: CallStateIndicatorProps): React.
           role="alert"
           style={{
             maxWidth: '28rem',
-            padding: '0.5rem 0.875rem',
-            borderRadius: '0.375rem',
-            backgroundColor: '#fee2e2',
-            color: '#991b1b',
-            fontSize: '0.875rem',
+            padding: 'var(--space-3) var(--space-4)',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'var(--color-error-subtle)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            color: 'var(--color-error)',
+            fontSize: 'var(--font-size-sm)',
           }}
         >
-          {/* dangerouslySetInnerHTML is safe — sanitise() strips all tags/scripts */}
           <span dangerouslySetInnerHTML={{ __html: sanitisedError }} />
           {onRetry && (
             <button
@@ -296,13 +420,13 @@ export function CallStateIndicator({ onRetry }: CallStateIndicatorProps): React.
               onClick={onRetry}
               style={{
                 display: 'block',
-                marginTop: '0.5rem',
+                marginTop: 'var(--space-2)',
                 background: 'none',
                 border: 'none',
-                color: '#991b1b',
+                color: 'var(--color-error)',
                 textDecoration: 'underline',
                 cursor: 'pointer',
-                fontSize: '0.875rem',
+                fontSize: 'var(--font-size-sm)',
                 fontWeight: 600,
                 padding: 0,
               }}
@@ -311,19 +435,18 @@ export function CallStateIndicator({ onRetry }: CallStateIndicatorProps): React.
               Try again
             </button>
           )}
-          {/* T049: Start New Call CTA — dispatches resetCall() + navigates to / (US5 AC3; FR-028) */}
           <button
             type="button"
             onClick={() => { resetCall(); navigate('/') }}
             style={{
               display: 'inline-block',
-              marginTop: '0.5rem',
-              padding: '0.3rem 0.75rem',
-              borderRadius: '0.25rem',
-              border: '1.5px solid #991b1b',
-              backgroundColor: '#991b1b',
+              marginTop: 'var(--space-2)',
+              padding: 'var(--space-1) var(--space-3)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--color-error)',
+              backgroundColor: 'var(--color-error)',
               color: '#ffffff',
-              fontSize: '0.875rem',
+              fontSize: 'var(--font-size-sm)',
               fontWeight: 600,
               cursor: 'pointer',
             }}
@@ -342,20 +465,33 @@ export function CallStateIndicator({ onRetry }: CallStateIndicatorProps): React.
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '0.375rem',
-            marginTop: '0.25rem',
-            padding: '0.375rem 0.875rem',
-            borderRadius: '0.375rem',
-            border: '2px solid #166534',
-            backgroundColor: '#f0fdf4',
-            color: '#166534',
-            fontSize: '0.875rem',
+            gap: 'var(--space-2)',
+            padding: 'var(--space-2) var(--space-4)',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--color-success)',
+            backgroundColor: 'var(--color-success-subtle)',
+            color: 'var(--color-success)',
+            fontSize: 'var(--font-size-sm)',
             fontWeight: 600,
             cursor: 'pointer',
+            transition: 'all 0.2s ease',
           }}
           aria-label="Review call summary and export"
         >
-          Review call →
+          Review call
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
         </button>
       )}
     </div>
