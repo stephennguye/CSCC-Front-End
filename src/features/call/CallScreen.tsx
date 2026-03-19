@@ -321,6 +321,9 @@ export function CallScreen(): React.ReactElement {
             style={{
               flex: 1,
               width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: 0,
               overflow: 'hidden',
               borderTop: '1px solid var(--color-border)',
             }}

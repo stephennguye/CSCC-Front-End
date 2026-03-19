@@ -89,7 +89,9 @@ export function useCallSession(): UseCallSessionReturn {
     audioManager.stop()
     webSocketService.disconnect()
 
-    const { setCallStatus, resetPipeline } = useAppStore.getState()
+    const { setCallStatus, resetPipeline, setVadActive } = useAppStore.getState()
+    // Reset VAD state so it doesn't leak into the next call
+    setVadActive(false)
     // Reset pipeline visualization state
     resetPipeline()
     // Only transition to ended if we were in an active call state

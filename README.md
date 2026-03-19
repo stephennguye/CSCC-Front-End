@@ -466,5 +466,28 @@ The dark theme is defined via CSS custom properties in `index.css`:
 
 ---
 
-**Status**: In Development
-**Last Updated**: 2026-03-13
+## Audio Pipeline
+
+### Voice Activity Detection (VAD)
+
+The `pcm-processor.worklet.ts` AudioWorklet handles real-time VAD:
+
+| Parameter | Value | Purpose |
+|---|---|---|
+| `VAD_ENERGY_THRESHOLD` | 0.015 RMS | Rejects background noise (AC, fans) |
+| `VAD_SPEECH_MIN_FRAMES` | 10 (~200ms) | Prevents brief noise spikes from triggering |
+| `VAD_SILENCE_TIMEOUT_FRAMES` | 80 (~1600ms) | Allows natural mid-sentence pauses |
+| `VAD_COOLDOWN_FRAMES` | 75 (~1500ms) | Prevents rapid-fire vad_end events |
+
+### Audio Flow
+
+```
+Microphone → AudioWorklet (16kHz mono PCM) → VAD detection
+  → vad_start: begin streaming PCM frames to backend
+  → vad_end: send audio_end → triggers STT→TOD pipeline
+```
+
+---
+
+**Status**: MVP Complete
+**Last Updated**: 2026-03-18

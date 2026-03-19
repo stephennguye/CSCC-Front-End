@@ -1,6 +1,6 @@
 // src/shared/services/WebRTCService.ts
 // T026 – Microphone capture via AudioWorklet, PCM forwarding to WebSocketService
-// Source: plan.md §WebRTCService; quickstart.md §Risk: WebRTC permission failure
+// + VAD-driven audio.end signaling for STT pipeline trigger
 
 import { useAppStore } from '../../store/store'
 import { webSocketService } from './WebSocketService'
@@ -10,24 +10,12 @@ class WebRTCService {
   private stream: MediaStream | null = null
   private workletNode: AudioWorkletNode | null = null
   private sourceNode: MediaStreamAudioSourceNode | null = null
-  /** Reference to AudioManager so we share a single AudioContext */
   private audioManager: AudioManager | null = null
 
-  /**
-   * Register the shared AudioManager. Must be called before requestMic()
-   * so the mic capture graph and AI playback graph share one AudioContext.
-   */
   setAudioManager(am: AudioManager): void {
     this.audioManager = am
   }
 
-  /**
-   * Request microphone access, register the PCM worklet, and start sending
-   * 320-sample (20 ms) Int16 frames over the WebSocket.
-   *
-   * On NotAllowedError: dispatches setCallStatus('error') with an actionable
-   * user-facing message.
-   */
   async requestMic(): Promise<void> {
     const { setCallStatus, setError } = useAppStore.getState()
 
@@ -50,8 +38,6 @@ class WebRTCService {
       return
     }
 
-    // Use the shared AudioContext from AudioManager if available,
-    // otherwise create a new one. Sharing is required for browser AEC.
     const ctx = this.audioManager?.getAudioContext() ?? new AudioContext({ sampleRate: 16000 })
 
     if (ctx.state === 'suspended') {
@@ -73,21 +59,46 @@ class WebRTCService {
     this.workletNode = new AudioWorkletNode(ctx, 'pcm-processor')
     this.sourceNode = ctx.createMediaStreamSource(this.stream)
 
-    // Forward Int16Array buffers from the worklet to WebSocketService
-    this.workletNode.port.onmessage = (event: MessageEvent<Int16Array>) => {
-      const int16 = event.data
-      // AudioWorklet always transfers a plain ArrayBuffer (not SharedArrayBuffer)
-      webSocketService.send(int16.buffer as ArrayBuffer)
+    // Handle messages from the AudioWorklet (PCM frames + VAD events)
+    this.workletNode.port.onmessage = (event: MessageEvent) => {
+      const msg = event.data
+
+      if (msg?.type === 'pcm') {
+        // Send raw PCM audio bytes to backend via WebSocket binary frame
+        const int16: Int16Array = msg.data
+        webSocketService.send(int16.buffer as ArrayBuffer)
+        return
+      }
+
+      if (msg?.type === 'vad_start') {
+        // User started speaking — update store and notify backend
+        console.debug('[VAD] Speech started')
+        useAppStore.getState().setVadActive(true)
+        return
+      }
+
+      if (msg?.type === 'vad_end') {
+        // User stopped speaking — send audio_end to trigger STT pipeline
+        console.debug('[VAD] Speech ended — sending audio_end')
+        useAppStore.getState().setVadActive(false)
+        webSocketService.sendJson({ type: 'audio_end' })
+        return
+      }
+
+      if (msg?.type === 'amplitude') {
+        useAppStore.getState().setAmplitude(msg.value)
+        return
+      }
+
+      // Legacy: plain Int16Array (backward compat if worklet doesn't use typed messages)
+      if (msg instanceof Int16Array) {
+        webSocketService.send(msg.buffer as ArrayBuffer)
+      }
     }
 
     this.sourceNode!.connect(this.workletNode)
-    // Do not connect workletNode to ctx.destination — we only capture, not play mic audio
   }
 
-  /**
-   * Disconnect all audio graph nodes and stop the media stream.
-   * Leaves the AudioContext open (owned by AudioManager).
-   */
   stop(): void {
     this.workletNode?.disconnect()
     this.sourceNode?.disconnect()

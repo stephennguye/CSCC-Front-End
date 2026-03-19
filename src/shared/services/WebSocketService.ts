@@ -213,7 +213,11 @@ class WebSocketService {
 
   /** Forward a binary (PCM audio) frame to AudioManager. */
   private handleBinaryFrame(buffer: ArrayBuffer): void {
-    _audioManager?.enqueue(buffer)
+    if (!_audioManager) {
+      console.warn('[WS] Binary frame received but no AudioManager registered')
+      return
+    }
+    _audioManager.enqueue(buffer)
   }
 
   /** Dispatch a validated inbound message to the appropriate Zustand actions. */

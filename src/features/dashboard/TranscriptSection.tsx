@@ -52,6 +52,9 @@ export function TranscriptSection({ transcript }: TranscriptSectionProps): React
             display: 'flex',
             flexDirection: 'column',
             gap: '0.5rem',
+            maxHeight: '32rem',
+            overflowY: 'auto',
+            paddingRight: '0.25rem',
           }}
           role="list"
           aria-label="Call transcript"

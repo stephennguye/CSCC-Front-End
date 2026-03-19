@@ -14,7 +14,7 @@ export const CallStateMessageSchema = z.object({
   /** Present only when state === 'error' */
   error: z.string().optional(),
   /** Present only when state === 'speaking'; raw PCM sample rate */
-  sampleRate: z.union([z.literal(22050), z.literal(24000)]).optional(),
+  sampleRate: z.number().optional(),
   timestamp: z.number(),
 })
 

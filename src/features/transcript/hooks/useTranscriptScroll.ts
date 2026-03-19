@@ -21,7 +21,9 @@ export function useTranscriptScroll(
   useEffect(() => {
     const el = containerRef.current
     if (el) {
-      el.scrollTop = el.scrollHeight
+      requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight
+      })
     }
   }, [entryCount])
 

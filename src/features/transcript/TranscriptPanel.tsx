@@ -34,9 +34,10 @@ export function TranscriptPanel(): React.ReactElement {
       aria-label="Call transcript"
       style={{
         width: '100%',
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        flexGrow: 1,
+        flex: '1 1 0',
         minHeight: 0,
         background: 'var(--color-surface)',
         borderRadius: 'var(--radius-card)',
@@ -56,7 +57,8 @@ export function TranscriptPanel(): React.ReactElement {
           flexDirection: 'column',
           gap: '0.75rem',
           overflowY: 'auto',
-          flexGrow: 1,
+          flex: '1 1 0',
+          minHeight: 0,
           padding: '1rem',
           scrollBehavior: 'smooth',
         }}

@@ -12,8 +12,8 @@ import { registerAudioManager } from './WebSocketService'
 
 export class AudioManager {
   private ctx: AudioContext | null = null
-  /** Current sample rate, set per speaking turn via call_state.sampleRate */
-  private sampleRate: 22050 | 24000 = 22050
+  /** Current sample rate — defaults to 16 kHz to match backend PCM output */
+  private sampleRate: number = 16000
   /** Active AudioBufferSourceNodes for gapless scheduling */
   private activeNodes: Set<AudioBufferSourceNode> = new Set()
   /** Next scheduled playback time in AudioContext.currentTime seconds */
@@ -54,7 +54,7 @@ export class AudioManager {
   // -------------------------------------------------------------------------
 
   /** Update the sample rate for the current speaking turn. */
-  setSampleRate(rate: 22050 | 24000): void {
+  setSampleRate(rate: number): void {
     this.sampleRate = rate
     // Reset drain state at the start of each new speaking turn
     this.streamComplete = false
@@ -65,17 +65,22 @@ export class AudioManager {
    * Interprets the bytes as Int16 mono at `this.sampleRate` — no RIFF header (OQ-1).
    */
   enqueue(buffer: ArrayBuffer): void {
+    if (buffer.byteLength === 0) return
+
     const ctx = this.getAudioContext()
 
-    // Ensure context is running
+    // Ensure context is running — resume and schedule playback
     if (ctx.state === 'suspended') {
-      ctx.resume().catch(console.error)
+      ctx.resume().then(() => {
+        console.debug('[AudioManager] AudioContext resumed, state:', ctx.state)
+      }).catch(console.error)
     }
 
     const int16 = new Int16Array(buffer)
+    if (int16.length === 0) return
+
     const float32 = new Float32Array(int16.length)
     for (let i = 0; i < int16.length; i++) {
-      // Convert Int16 range [-32768, 32767] to float [-1.0, 1.0]
       float32[i] = int16[i] / 32768
     }
 
@@ -88,7 +93,7 @@ export class AudioManager {
 
     // Gapless scheduling: queue immediately after the last scheduled chunk
     const now = ctx.currentTime
-    const startTime = Math.max(now, this.nextStartTime)
+    const startTime = Math.max(now + 0.01, this.nextStartTime)
     this.nextStartTime = startTime + audioBuffer.duration
 
     this.pendingCount++
@@ -102,9 +107,13 @@ export class AudioManager {
     this.activeNodes.add(source)
     source.start(startTime)
 
-    // Track VAD-like state: AI is speaking = vadActive false
-    const { setVadActive } = useAppStore.getState()
-    setVadActive(false)
+    // Log first frame for debugging
+    if (this.pendingCount === 1) {
+      console.debug(
+        '[AudioManager] First audio frame enqueued:',
+        `${int16.length} samples, sampleRate=${this.sampleRate}, ctx.state=${ctx.state}`,
+      )
+    }
   }
 
   /**
