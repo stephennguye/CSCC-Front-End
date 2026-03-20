@@ -3,7 +3,7 @@
 // Phase 4 (T038) will integrate TranscriptPanel into the placeholder slot.
 // Source: plan.md §call/; spec.md US1
 
-import React, { useCallback, useEffect, useState, useRef } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useAppStore } from '../../store/store'
 import { useCallSession } from './hooks/useCallSession'
 import { CallStateIndicator } from './CallStateIndicator'
@@ -39,32 +39,20 @@ export function CallScreen(): React.ReactElement {
 
   // ── Call Timer ──────────────────────────────────────────────────────────
   const [elapsed, setElapsed] = useState(0)
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const isActive = status === 'listening' || status === 'thinking' || status === 'speaking'
 
   useEffect(() => {
-    if (isActive && startedAt) {
-      // Initialize with current elapsed
-      setElapsed(Math.floor((Date.now() - startedAt) / 1000))
-      timerRef.current = setInterval(() => {
-        setElapsed(Math.floor((Date.now() - startedAt) / 1000))
-      }, 1000)
-    } else if (!isActive) {
-      if (timerRef.current) {
-        clearInterval(timerRef.current)
-        timerRef.current = null
-      }
+    if (!isActive || !startedAt) {
       if (status === 'idle') {
         setElapsed(0)
       }
+      return
     }
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current)
-        timerRef.current = null
-      }
-    }
+    const id = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startedAt) / 1000))
+    }, 1000)
+    return () => clearInterval(id)
   }, [isActive, startedAt, status])
 
   // ── Sidebar collapse state ─────────────────────────────────────────────

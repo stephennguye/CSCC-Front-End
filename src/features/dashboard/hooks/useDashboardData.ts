@@ -32,6 +32,7 @@ export function useDashboardData(): void {
     }
 
     const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 5000)
 
     async function fetchSession() {
       setLoading(true)
@@ -64,6 +65,7 @@ export function useDashboardData(): void {
           err instanceof Error ? err.message : 'An unexpected error occurred while loading the session.',
         )
       } finally {
+        clearTimeout(timeoutId)
         setLoading(false)
       }
     }
@@ -71,6 +73,7 @@ export function useDashboardData(): void {
     void fetchSession()
 
     return () => {
+      clearTimeout(timeoutId)
       controller.abort()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

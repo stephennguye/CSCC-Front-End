@@ -1,5 +1,5 @@
 // src/store/slices/connection.slice.ts
-// T016 – ConnectionSlice: wsStatus, latencyMs, reconnectCount, connectionLog + actions
+// T016 – ConnectionSlice: wsStatus, reconnectCount, connectionLog + actions
 // Source: data-model.md §CallStatus; data-model.md §ConnectionLogEntry
 
 import type { StateCreator } from 'zustand'
@@ -11,8 +11,6 @@ export interface ConnectionSlice {
   connection: {
     /** WebSocket health state; drives reconnecting display in CallStateIndicator */
     wsStatus: ConnectionStatus
-    /** Last measured round-trip latency in milliseconds */
-    latencyMs: number
     /** Number of reconnection attempts in the current session */
     reconnectCount: number
     /** Ordered log of connection events for observability */
@@ -26,7 +24,6 @@ export interface ConnectionSlice {
 
 const initialConnectionState: ConnectionSlice['connection'] = {
   wsStatus: 'idle',
-  latencyMs: 0,
   reconnectCount: 0,
   connectionLog: [],
 }
@@ -55,7 +52,7 @@ export const createConnectionSlice: StateCreator<
 
   appendConnectionLog: (entry) =>
     set(
-      (state) => { state.connection.connectionLog.push(entry) },
+      (state) => { state.connection.connectionLog = [...state.connection.connectionLog, entry].slice(-100) },
       false,
       'connection/appendConnectionLog',
     ),

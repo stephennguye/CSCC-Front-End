@@ -47,7 +47,7 @@ export const createPipelineSlice: StateCreator<
   pushPipelineOutput: (output) =>
     set(
       (state) => {
-        state.pipeline.outputs.push(output)
+        state.pipeline.outputs = [...state.pipeline.outputs, output].slice(-50)
         state.pipeline.latest = output
       },
       false,

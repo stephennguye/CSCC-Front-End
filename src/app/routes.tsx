@@ -1,14 +1,23 @@
+import { lazy, Suspense } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import { CallScreen } from '../features/call/CallScreen'
-import { DashboardScreen } from '../features/dashboard/DashboardScreen'
+import { ErrorBoundary } from '../shared/components/ErrorBoundary'
+
+const DashboardScreen = lazy(() => import('../features/dashboard/DashboardScreen'))
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <CallScreen />,
+    element: <ErrorBoundary><CallScreen /></ErrorBoundary>,
   },
   {
     path: '/dashboard/:sessionId',
-    element: <DashboardScreen />,
+    element: (
+      <ErrorBoundary>
+        <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
+          <DashboardScreen />
+        </Suspense>
+      </ErrorBoundary>
+    ),
   },
 ])

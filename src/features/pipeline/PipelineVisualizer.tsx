@@ -232,7 +232,7 @@ export function PipelineVisualizer(): React.ReactElement {
       }}
     >
       {/* STT Output */}
-      <PipelineStep icon={<IconMic />} label="STT" accentColor="var(--color-accent)">
+      <PipelineStep key="STT" icon={<IconMic />} label="STT" accentColor="var(--color-accent)">
         {latest.sttText ? (
           <code style={codeBlockStyle}>{latest.sttText}</code>
         ) : (
@@ -241,7 +241,7 @@ export function PipelineVisualizer(): React.ReactElement {
       </PipelineStep>
 
       {/* NLU Output */}
-      <PipelineStep icon={<IconBrain />} label="NLU" accentColor="#8b5cf6">
+      <PipelineStep key="NLU" icon={<IconBrain />} label="NLU" accentColor="#8b5cf6">
         <div style={cardStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <span style={intentBadgeStyle}>{latest.nlu.intent}</span>
@@ -272,7 +272,7 @@ export function PipelineVisualizer(): React.ReactElement {
       </PipelineStep>
 
       {/* DST: Belief State */}
-      <PipelineStep icon={<IconDatabase />} label="DST" accentColor="#06b6d4">
+      <PipelineStep key="DST" icon={<IconDatabase />} label="DST" accentColor="#06b6d4">
         <div style={cardStyle}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
             <tbody>
@@ -294,7 +294,7 @@ export function PipelineVisualizer(): React.ReactElement {
       </PipelineStep>
 
       {/* Policy Decision */}
-      <PipelineStep icon={<IconTarget />} label="Policy" accentColor="var(--color-warning)">
+      <PipelineStep key="Policy" icon={<IconTarget />} label="Policy" accentColor="var(--color-warning)">
         <div style={cardStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <span style={actionBadgeStyle}>{latest.action}</span>
@@ -308,7 +308,7 @@ export function PipelineVisualizer(): React.ReactElement {
       </PipelineStep>
 
       {/* NLG Response */}
-      <PipelineStep icon={<IconChat />} label="NLG" accentColor="var(--color-success)" isLast>
+      <PipelineStep key="NLG" icon={<IconChat />} label="NLG" accentColor="var(--color-success)" isLast>
         <div style={quoteBlockStyle}>
           <span
             /* eslint-disable-next-line react/no-danger */

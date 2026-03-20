@@ -11,6 +11,8 @@ class WebRTCService {
   private workletNode: AudioWorkletNode | null = null
   private sourceNode: MediaStreamAudioSourceNode | null = null
   private audioManager: AudioManager | null = null
+  private workletLoaded = false
+  public currentAmplitude = 0
 
   setAudioManager(am: AudioManager): void {
     this.audioManager = am
@@ -45,9 +47,12 @@ class WebRTCService {
     }
 
     try {
-      await ctx.audioWorklet.addModule(
-        new URL('../../audio/pcm-processor.worklet.ts', import.meta.url),
-      )
+      if (!this.workletLoaded) {
+        await ctx.audioWorklet.addModule(
+          new URL('../../audio/pcm-processor.worklet.ts', import.meta.url),
+        )
+        this.workletLoaded = true
+      }
     } catch (err) {
       console.error('[WebRTC] Failed to load AudioWorklet:', err)
       setCallStatus('error')
@@ -86,7 +91,7 @@ class WebRTCService {
       }
 
       if (msg?.type === 'amplitude') {
-        useAppStore.getState().setAmplitude(msg.value)
+        this.currentAmplitude = msg.value
         return
       }
 

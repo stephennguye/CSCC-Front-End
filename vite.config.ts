@@ -49,6 +49,18 @@ function workletPlugin(): Plugin {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [workletPlugin(), react()],
+  build: {
+    rollupOptions: {
+      output: {
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name?.endsWith('.worklet.ts')) {
+            return 'assets/[name]-[hash].js'
+          }
+          return 'assets/[name]-[hash][extname]'
+        },
+      },
+    },
+  },
   server: {
     proxy: {
       // Proxy REST API calls to the FastAPI backend

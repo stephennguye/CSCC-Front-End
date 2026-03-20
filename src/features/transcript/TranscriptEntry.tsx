@@ -2,7 +2,7 @@
 // T035 – Renders a single committed TranscriptEntry with speaker badge and timestamp.
 // Source: data-model.md §TranscriptEntry; plan.md §Principle VII (sanitise all untrusted text)
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import Badge from '../../shared/components/Badge'
 import { sanitise } from '../../shared/utils/sanitise'
 import type { TranscriptEntry as TranscriptEntryType } from '../../shared/types/call-session'
@@ -21,7 +21,7 @@ export interface TranscriptEntryProps {
  * - `entry.text` is passed through `sanitise()` before DOM insertion (Principle VII).
  * - Timestamp is formatted as a locale time string.
  */
-export function TranscriptEntry({
+export const TranscriptEntry = React.memo(function TranscriptEntry({
   entry,
   speakerLabel,
 }: TranscriptEntryProps): React.ReactElement {
@@ -34,7 +34,7 @@ export function TranscriptEntry({
   const displayLabel =
     speakerLabel ?? (entry.speaker === 'user' ? 'You' : 'AI')
 
-  const safeText = sanitise(entry.text)
+  const sanitizedText = useMemo(() => sanitise(entry.text), [entry.text])
 
   const isUser = entry.speaker === 'user'
 
@@ -77,7 +77,7 @@ export function TranscriptEntry({
       {/* Transcript text — set via dangerouslySetInnerHTML after DOMPurify sanitisation */}
       <p
         /* eslint-disable-next-line react/no-danger */
-        dangerouslySetInnerHTML={{ __html: safeText }}
+        dangerouslySetInnerHTML={{ __html: sanitizedText }}
         style={{
           margin: 0,
           fontSize: '0.9375rem',     // rem-based for zoom accessibility (FR-025)
@@ -88,4 +88,4 @@ export function TranscriptEntry({
       />
     </div>
   )
-}
+})

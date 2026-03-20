@@ -82,7 +82,7 @@ function formatOutcome(outcome: string): { label: string; color: string } {
  * - On error, a friendly message with a home link is shown.
  * - On success, all three content sections and the Export button render.
  */
-export function DashboardScreen(): React.ReactElement {
+export default function DashboardScreen(): React.ReactElement {
   // Populate DashboardSlice from the REST API
   useDashboardData()
 

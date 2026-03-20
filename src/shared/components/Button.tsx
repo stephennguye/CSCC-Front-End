@@ -171,7 +171,6 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
-        role="button"
         disabled={isDisabled}
         aria-busy={loading || undefined}
         onKeyDown={handleKeyDown}

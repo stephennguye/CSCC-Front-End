@@ -64,16 +64,15 @@ export class AudioManager {
    * Enqueue a raw PCM Int16 ArrayBuffer for gapless scheduled playback.
    * Interprets the bytes as Int16 mono at `this.sampleRate` — no RIFF header (OQ-1).
    */
-  enqueue(buffer: ArrayBuffer): void {
+  async enqueue(buffer: ArrayBuffer): Promise<void> {
     if (buffer.byteLength === 0) return
 
     const ctx = this.getAudioContext()
 
-    // Ensure context is running — resume and schedule playback
+    // Ensure context is running — await resume before scheduling audio buffers
     if (ctx.state === 'suspended') {
-      ctx.resume().then(() => {
-        console.debug('[AudioManager] AudioContext resumed, state:', ctx.state)
-      }).catch(console.error)
+      await ctx.resume()
+      console.debug('[AudioManager] AudioContext resumed, state:', ctx.state)
     }
 
     const int16 = new Int16Array(buffer)

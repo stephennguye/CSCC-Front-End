@@ -2,7 +2,7 @@
 // T037 – Live transcript panel; renders committed entries + streaming partial row.
 // Source: spec.md US2 ACs; data-model.md §TranscriptSlice; plan.md §Principle V (append-only)
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import { useAppStore } from '../../store/store'
 import { TranscriptEntry } from './TranscriptEntry'
 import { useTranscriptScroll } from './hooks/useTranscriptScroll'
@@ -26,6 +26,8 @@ export function TranscriptPanel(): React.ReactElement {
   const speakerLabels = useAppStore((s) => s.transcript.speakerLabels)
 
   const containerRef = useTranscriptScroll(entries.length)
+
+  const sanitizedPartial = useMemo(() => sanitise(currentPartial), [currentPartial])
 
   const hasContent = entries.length > 0 || currentPartial.length > 0
 
@@ -126,7 +128,7 @@ export function TranscriptPanel(): React.ReactElement {
             </span>
             <p
               /* eslint-disable-next-line react/no-danger */
-              dangerouslySetInnerHTML={{ __html: sanitise(currentPartial) }}
+              dangerouslySetInnerHTML={{ __html: sanitizedPartial }}
               style={{
                 margin: 0,
                 fontSize: '0.9375rem',

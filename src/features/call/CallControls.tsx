@@ -56,7 +56,6 @@ export function CallControls({ status, onStart, onEnd }: CallControlsProps): Rea
     cursor: 'pointer',
     transition: 'transform 0.15s ease, box-shadow 0.2s ease, opacity 0.15s ease',
     padding: 0,
-    outline: 'none',
   }
 
   return (

@@ -132,58 +132,59 @@ class WebSocketService {
     ws.binaryType = 'arraybuffer'
     this.ws = ws
 
-    ws.onopen = () => {
-      this.attemptCount = 0 // reset backoff counter on successful connection
-      setWsStatus('connected')
-      appendConnectionLog({ event: 'connected', timestamp: Date.now() })
-      // call_start is sent by useCallSession after connect() resolves
-    }
-
-    ws.onmessage = (event: MessageEvent) => {
-      if (event.data instanceof ArrayBuffer) {
-        this.handleBinaryFrame(event.data)
-      } else if (typeof event.data === 'string') {
-        this.handleTextFrame(event.data)
-      }
-    }
-
-    ws.onerror = () => {
-      // T055: detect HTTP-level 401/403 on upgrade — WebSocket onerror fires before onclose
-      // We cannot read the HTTP status code here; we handle it in onclose via wasClean
-    }
-
-    ws.onclose = (event: CloseEvent) => {
-      if (this.intentionalClose) return
-
-      // T055: CloseEvent code 4401 / 4403 used by convention for auth rejections
-      // RFC 6455 close codes 3000-4999 are application-defined
-      if (event.code === 4401 || event.code === 4403 || event.code === 1008) {
-        setCallStatus('error')
-        setError('Authentication failed. Please retry to start a new call.')
-        setWsStatus('failed')
-        appendConnectionLog({ event: 'failed', timestamp: Date.now(), wsCloseCode: event.code })
-        return
-      }
-
-      // Unexpected close — trigger full-jitter exponential backoff reconnect (T048).
-      appendConnectionLog({ event: 'disconnected', timestamp: Date.now(), wsCloseCode: event.code })
-      this.scheduleReconnect()
-    }
-
-    // Return a promise that resolves/rejects when the socket opens or errors
+    // All handlers are set once inside the Promise to avoid overwrite issues.
+    // A `settled` flag ensures the promise resolves/rejects exactly once.
     return new Promise<void>((resolve, reject) => {
-      const originalOnOpen = ws.onopen
-      ws.onopen = (ev) => {
-        if (originalOnOpen) (originalOnOpen as (ev: Event) => void).call(ws, ev)
-        resolve()
+      let settled = false
+
+      ws.onopen = () => {
+        this.attemptCount = 0 // reset backoff counter on successful connection
+        setWsStatus('connected')
+        appendConnectionLog({ event: 'connected', timestamp: Date.now() })
+        // call_start is sent by useCallSession after connect() resolves
+        if (!settled) { settled = true; resolve() }
       }
-      const originalOnClose = ws.onclose
-      ws.onclose = (ev: CloseEvent) => {
-        if (originalOnClose) (originalOnClose as (ev: CloseEvent) => void).call(ws, ev)
-        reject(new Error(`WebSocket closed before open: code=${ev.code}`))
+
+      ws.onmessage = (event: MessageEvent) => {
+        if (event.data instanceof ArrayBuffer) {
+          this.handleBinaryFrame(event.data)
+        } else if (typeof event.data === 'string') {
+          this.handleTextFrame(event.data)
+        }
       }
+
       ws.onerror = () => {
-        reject(new Error('WebSocket connection error'))
+        if (!settled) {
+          settled = true
+          reject(new Error('WebSocket connection error'))
+        } else {
+          // Post-open error — trigger reconnect
+          useAppStore.getState().setError('WebSocket connection lost')
+          this.scheduleReconnect()
+        }
+      }
+
+      ws.onclose = (event: CloseEvent) => {
+        if (!settled) {
+          settled = true
+          reject(new Error(`WebSocket closed before open: code=${event.code}`))
+        }
+
+        if (this.intentionalClose) return
+
+        // T055: CloseEvent code 4401 / 4403 used by convention for auth rejections
+        // RFC 6455 close codes 3000-4999 are application-defined
+        if (event.code === 4401 || event.code === 4403 || event.code === 1008) {
+          setCallStatus('error')
+          setError('Authentication failed. Please retry to start a new call.')
+          setWsStatus('failed')
+          appendConnectionLog({ event: 'failed', timestamp: Date.now(), wsCloseCode: event.code })
+          return
+        }
+
+        // Unexpected close — trigger full-jitter exponential backoff reconnect (T048).
+        appendConnectionLog({ event: 'disconnected', timestamp: Date.now(), wsCloseCode: event.code })
+        this.scheduleReconnect()
       }
     })
   }
