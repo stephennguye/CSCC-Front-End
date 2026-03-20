@@ -86,18 +86,14 @@ export const TranscriptEntrySchema = z.object({
   timestamp: z.number(),
 })
 
-export const ClaimSchema = z.object({
-  index: z.number().int().nonnegative(),
-  text: z.string(),
-  speaker: z.enum(['user', 'ai']),
-  confidence: z.number().min(0).max(1),
-  timestamp: z.number(),
-})
-
-export const ReminderSchema = z.object({
-  index: z.number().int().nonnegative(),
-  text: z.string(),
-  dueAt: z.string().datetime().nullable(),
+export const BookingSchema = z.object({
+  status: z.enum(['in_progress', 'confirmed', 'completed']),
+  turnCount: z.number().int().nonnegative(),
+  lastIntent: z.string().nullable(),
+  filledSlots: z.record(z.string()),
+  missingSlots: z.array(z.string()),
+  slotsFilled: z.number().int().nonnegative(),
+  slotsTotal: z.number().int().nonnegative(),
 })
 
 const SessionSchema = z.object({
@@ -111,8 +107,15 @@ const SessionSchema = z.object({
 export const PostCallResponseSchema = z.object({
   session: SessionSchema,
   transcript: z.array(TranscriptEntrySchema),
-  claims: z.array(ClaimSchema),
-  reminders: z.array(ReminderSchema),
+  booking: BookingSchema.optional().default({
+    status: 'in_progress',
+    turnCount: 0,
+    lastIntent: null,
+    filledSlots: {},
+    missingSlots: [],
+    slotsFilled: 0,
+    slotsTotal: 0,
+  }),
 })
 
 export type PostCallResponse = z.infer<typeof PostCallResponseSchema>

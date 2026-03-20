@@ -227,8 +227,11 @@ class WebSocketService {
 
     switch (msg.type) {
       case 'call_state': {
-        // Map backend state to CallStatus
-        store.setCallStatus(msg.state)
+        // Map backend state to CallStatus.
+        // When backend signals 'speaking', audio chunks haven't arrived yet.
+        // Show 'thinking' (processing) until AudioManager actually starts playback.
+        const mappedState = msg.state === 'speaking' ? 'thinking' : msg.state
+        store.setCallStatus(mappedState)
         if (msg.state === 'error') {
           store.setError(msg.error ?? 'An unknown error occurred.')
         }

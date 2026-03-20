@@ -97,6 +97,17 @@ export class AudioManager {
 
     this.pendingCount++
 
+    // Transition to 'speaking' on the first enqueued chunk — this is when
+    // audio actually starts playing, synchronising the animation with playback.
+    if (this.pendingCount === 1) {
+      const { setCallStatus } = useAppStore.getState()
+      setCallStatus('speaking')
+      console.debug(
+        '[AudioManager] First audio frame enqueued:',
+        `${int16.length} samples, sampleRate=${this.sampleRate}, ctx.state=${ctx.state}`,
+      )
+    }
+
     source.onended = () => {
       this.activeNodes.delete(source)
       this.pendingCount--
@@ -105,14 +116,6 @@ export class AudioManager {
 
     this.activeNodes.add(source)
     source.start(startTime)
-
-    // Log first frame for debugging
-    if (this.pendingCount === 1) {
-      console.debug(
-        '[AudioManager] First audio frame enqueued:',
-        `${int16.length} samples, sampleRate=${this.sampleRate}, ctx.state=${ctx.state}`,
-      )
-    }
   }
 
   /**
