@@ -182,6 +182,19 @@ class WebSocketService {
           return
         }
 
+        // Server-initiated graceful close (code 1000) — the backend closed
+        // the connection after farewell/teardown. Treat as intentional;
+        // do NOT reconnect or the FE will create a new session and lose state.
+        const currentCallStatus = useAppStore.getState().call.status
+        if (event.code === 1000 || currentCallStatus === 'ended') {
+          setWsStatus('disconnected')
+          if (currentCallStatus !== 'ended') {
+            setCallStatus('ended')
+          }
+          appendConnectionLog({ event: 'disconnected', timestamp: Date.now(), wsCloseCode: event.code })
+          return
+        }
+
         // Unexpected close — trigger full-jitter exponential backoff reconnect (T048).
         appendConnectionLog({ event: 'disconnected', timestamp: Date.now(), wsCloseCode: event.code })
         this.scheduleReconnect()
